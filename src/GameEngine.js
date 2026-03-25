@@ -1,15 +1,31 @@
+import { NUM_HOLES } from './constants/constants.js';
+
 export class GameEngine {
   constructor() {
-    this.players = {};
-    this.activeMole = null;
-    this.spawnInterval = null;
     this.guestNum = 1;
-    this.moleLocked = false;
+
+    this.activeMoles = new Set();
+    this.moleLocked = new Set();
+
+    this.players = {};
+    this.lastWhackTime = {};
+    this.moleTimers = {};
   }
 
   spawnMole() {
-    this.activeMole = Math.floor(Math.random() * 8) + 1;
-    this.moleLocked = false;
+    if (this.activeMoles.size >= 10) return;
+
+    const index = Math.floor(Math.random() * (NUM_HOLES - 1)) + 1;
+    if (!this.activeMoles.has(index)) {
+      this.activeMoles.add(index);
+    }
+    this.moleLocked.delete(index);
+
+    // remove moles after some time if they are not hit
+    this.moleTimers[index] = setTimeout(() => {
+      this.activeMoles.delete(index);
+      delete this.moleTimers[index];
+    }, 4000);
   }
 
   addPlayer(id) {
@@ -31,24 +47,35 @@ export class GameEngine {
   }
 
   handleWhack(playerId, holeIndex) {
-    console.log(holeIndex, this.activeMole);
-    if (this.moleLocked) {
-      console.log('mole locked');
+    if (holeIndex < 1 || holeIndex > NUM_HOLES) return false;
+
+    // prevent spam clicks
+    const now = Date.now();
+    if (
+      this.lastWhackTime[playerId] &&
+      now - this.lastWhackTime[playerId] < 100
+    ) {
       return false;
     }
-    if (holeIndex === this.activeMole) {
-      this.moleLocked = true;
-      this.players[playerId].score++;
-      this.activeMole = null;
-      return true;
-    }
-    return false;
+    this.lastWhackTime[playerId] = now;
+
+    if (!this.activeMoles.has(holeIndex)) return false;
+
+    if (this.moleLocked.has(holeIndex)) return false;
+
+    this.moleLocked.add(holeIndex);
+
+    this.players[playerId].score++;
+
+    this.activeMoles.delete(holeIndex);
+    this.moleLocked.delete(holeIndex);
+    return true;
   }
 
   getState() {
     return {
       players: this.players,
-      activeMole: this.activeMole,
+      activeMoles: [...this.activeMoles], // convert to array to serialize over socket
     };
   }
 }

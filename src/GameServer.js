@@ -13,7 +13,7 @@ const game = new GameEngine();
 setInterval(() => {
   game.spawnMole();
   io.emit('gameState', game.getState());
-}, 1500);
+}, 300);
 
 io.on('connection', (socket) => {
   console.log('Player connected: ', socket.id);
@@ -35,6 +35,7 @@ io.on('connection', (socket) => {
       socket.emit('hitConfirmed', holeIndex);
 
       // send everyone
+      // console.log('gamestate', game.getState());
       io.emit('gameState', game.getState());
     }
   });
