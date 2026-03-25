@@ -13,17 +13,13 @@ export class GameEngine {
   }
 
   addPlayer(id) {
-    this.guestNum = this.guestNum % 10;
+    this.guestNum = (this.guestNum + 1) % 10;
     const defaultName = `Guest${this.guestNum}`;
 
     this.players[id] = {
       score: 0,
       name: defaultName,
     };
-  }
-
-  getPlayers() {
-    return this.players;
   }
 
   removePlayer(id) {
@@ -42,7 +38,8 @@ export class GameEngine {
     }
     if (holeIndex === this.activeMole) {
       this.moleLocked = true;
-      this.players[playerId].score += 1;
+      this.players[playerId].score++;
+      this.activeMole = null;
       return true;
     }
     return false;

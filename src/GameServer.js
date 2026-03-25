@@ -19,8 +19,8 @@ io.on('connection', (socket) => {
   console.log('Player connected: ', socket.id);
 
   game.addPlayer(socket.id);
-  socket.emit('gameState', game.getState());
-  io.emit('gameState', game.getPlayers()); // send update to everyone
+  // send update to everyone
+  io.emit('gameState', game.getState());
 
   socket.on('setPlayerName', (name) => {
     game.setPlayerName(socket.id, name);
@@ -31,6 +31,10 @@ io.on('connection', (socket) => {
     console.log('whack', holeIndex);
     const updated = game.handleWhack(socket.id, holeIndex);
     if (updated) {
+      // only confirm successful whack to player
+      socket.emit('hitConfirmed', holeIndex);
+
+      // send everyone
       io.emit('gameState', game.getState());
     }
   });
@@ -38,7 +42,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Player disconected:', socket.id);
     game.removePlayer(socket.id);
-    io.emit('gameState', game.getPlayers());
+    io.emit('gameState', game.getState());
   });
 });
 
