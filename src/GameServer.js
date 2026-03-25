@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import { GameEngine } from './GameEngine.js';
+import { TICK_RATE } from './constants/constants.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,11 +10,25 @@ const server = http.createServer(app);
 
 const io = new Server(server, { cors: { origin: '*' } });
 
+let countdownRunning = false;
 const game = new GameEngine();
 setInterval(() => {
-  game.spawnMole();
-  io.emit('gameState', game.getState());
-}, 300);
+  game.update();
+  const state = game.getState();
+  io.emit('gameState', state);
+
+  if (state.winner && !countdownRunning) {
+    countdownRunning = true;
+    // start countdown on clients
+    io.emit('startCountdown', 10);
+
+    setTimeout(() => {
+      game.resetGame();
+      countdownRunning = false;
+      io.emit('gameState', state);
+    }, 10000);
+  }
+}, TICK_RATE);
 
 io.on('connection', (socket) => {
   console.log('Player connected: ', socket.id);
@@ -28,14 +43,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('whack', (holeIndex) => {
-    console.log('whack', holeIndex);
     const updated = game.handleWhack(socket.id, holeIndex);
     if (updated) {
       // only confirm successful whack to player
       socket.emit('hitConfirmed', holeIndex);
 
       // send everyone
-      // console.log('gamestate', game.getState());
       io.emit('gameState', game.getState());
     }
   });
