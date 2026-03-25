@@ -34,6 +34,7 @@ io.on('connection', (socket) => {
   console.log('Player connected: ', socket.id);
 
   game.addPlayer(socket.id);
+  game.resetGame();
   // send update to everyone
   io.emit('gameState', game.getState());
 
@@ -43,10 +44,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('whack', (holeIndex) => {
-    const updated = game.handleWhack(socket.id, holeIndex);
-    if (updated) {
+    const points = game.handleWhack(socket.id, holeIndex);
+    if (points > 0) {
       // only confirm successful whack to player
-      socket.emit('hitConfirmed', holeIndex);
+      socket.emit('hitConfirmed', { index: holeIndex, points });
 
       // send everyone
       io.emit('gameState', game.getState());

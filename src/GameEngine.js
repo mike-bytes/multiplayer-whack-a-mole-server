@@ -1,15 +1,14 @@
-import { NUM_HOLES, WINNING_SCORE } from './constants/constants.js';
+import { NUM_HOLES, WINNING_SCORE, ITEMS } from './constants/constants.js';
 
 export class GameEngine {
   constructor() {
     this.guestNum = 1;
 
-    this.activeMoles = new Set();
+    this.activeMoles = [];
     this.moleLocked = new Set();
 
     this.players = {};
     this.lastWhackTime = {};
-    this.moleTimers = {};
 
     this.nextSpawnTime = Date.now();
     this.winner = null;
@@ -36,7 +35,7 @@ export class GameEngine {
   }
 
   handleWhack(playerId, holeIndex) {
-    if (holeIndex < 1 || holeIndex > NUM_HOLES) return false;
+    if (holeIndex < 0 || holeIndex >= NUM_HOLES) return 0;
 
     // prevent spam clicks
     const now = Date.now();
@@ -44,33 +43,33 @@ export class GameEngine {
       this.lastWhackTime[playerId] &&
       now - this.lastWhackTime[playerId] < 100
     ) {
-      return false;
+      return 0;
     }
     this.lastWhackTime[playerId] = now;
 
-    if (!this.activeMoles.has(holeIndex)) return false;
+    const moleIndex = this.activeMoles.findIndex((m) => m.index === holeIndex);
+    if (moleIndex === -1) return 0;
 
-    if (this.moleLocked.has(holeIndex)) return false;
-
+    if (this.moleLocked.has(holeIndex)) return 0;
     this.moleLocked.add(holeIndex);
 
+    const mole = this.activeMoles[moleIndex];
     const player = this.players[playerId];
-    player.score++;
+    const points =
+      mole.type === ITEMS.STAR.TYPE ? ITEMS.STAR.POINTS : ITEMS.MOLE.POINTS;
+    player.score += points;
     if (player.score >= WINNING_SCORE) {
       this.winner = { id: playerId, name: player.name };
     }
-    
-    this.activeMoles.delete(holeIndex);
-    delete this.moleTimers[holeIndex];
 
-    this.moleLocked.delete(holeIndex);
-    return true;
+    this.activeMoles.splice(moleIndex, 1);
+    return points;
   }
 
   getState() {
     return {
       players: this.players,
-      activeMoles: [...this.activeMoles], // convert to array to serialize over socket
+      activeMoles: this.activeMoles,
       winner: this.winner,
     };
   }
@@ -96,32 +95,25 @@ export class GameEngine {
   }
 
   spawnMole(now) {
-    if (this.activeMoles.size >= 10) return;
+    if (this.activeMoles.length >= 10) return;
 
-    const index = Math.floor(Math.random() * (NUM_HOLES - 1)) + 1;
-    if (this.activeMoles.has(index)) return;
+    const index = Math.floor(Math.random() * NUM_HOLES);
 
-    this.activeMoles.add(index);
+    if (this.activeMoles.some((m) => m.index === index)) return;
+
+    const moleType = Math.random() < 0.15 ? ITEMS.STAR.TYPE : ITEMS.MOLE.TYPE;
+    this.activeMoles.push({ index, type: moleType, expiresAt: now + 3000 });
+
     this.moleLocked.delete(index);
-
-    // remove moles after some time if they are not hit
-    const lifetime = 3000;
-    this.moleTimers[index] = now + lifetime;
   }
 
   cleanupExpiredMoles(now) {
-    for (const holeIndex of this.activeMoles) {
-      if (now >= this.moleTimers[holeIndex]) {
-        this.activeMoles.delete(holeIndex);
-        delete this.moleTimers[holeIndex];
-      }
-    }
+    this.activeMoles = this.activeMoles.filter((item) => now < item.expiresAt);
   }
 
   resetGame() {
-    this.activeMoles.clear();
+    this.activeMoles = [];
     this.moleLocked.clear();
-    this.moleExpireTimes = {};
 
     for (const id in this.players) {
       this.players[id].score = 0;
