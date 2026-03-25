@@ -10,4 +10,8 @@ export const ITEMS = {
     TYPE: 'star',
     POINTS: 3,
   },
+  BOMB: {
+    TYPE: 'bomb',
+    POINTS: -2,
+  },
 };

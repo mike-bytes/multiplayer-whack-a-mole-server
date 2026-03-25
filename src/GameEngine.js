@@ -53,10 +53,23 @@ export class GameEngine {
     if (this.moleLocked.has(holeIndex)) return 0;
     this.moleLocked.add(holeIndex);
 
-    const mole = this.activeMoles[moleIndex];
+    const item = this.activeMoles[moleIndex];
     const player = this.players[playerId];
-    const points =
-      mole.type === ITEMS.STAR.TYPE ? ITEMS.STAR.POINTS : ITEMS.MOLE.POINTS;
+    let points = 0;
+    switch (item.type) {
+      case ITEMS.STAR.TYPE: {
+        points = ITEMS.STAR.POINTS;
+        break;
+      }
+      case ITEMS.MOLE.TYPE: {
+        points = ITEMS.MOLE.POINTS;
+        break;
+      }
+      case ITEMS.BOMB.TYPE: {
+        points = ITEMS.BOMB.POINTS;
+        break;
+      }
+    }
     player.score += points;
     if (player.score >= WINNING_SCORE) {
       this.winner = { id: playerId, name: player.name };
@@ -78,37 +91,45 @@ export class GameEngine {
     if (this.winner) return;
 
     const now = Date.now();
-    this.spawnMoles(now);
+    this.spawnItems(now);
     this.cleanupExpiredMoles(now);
   }
 
-  spawnMoles(now) {
+  spawnItems(now) {
     if (now < this.nextSpawnTime) return;
 
     const count = Math.floor(Math.random() * 2) + 1;
     for (let i = 0; i < count; i++) {
-      this.spawnMole(now);
+      this.spawnItem(now);
     }
 
     const delay = 500;
     this.nextSpawnTime = now + delay;
   }
 
-  spawnMole(now) {
+  spawnItem(now) {
     if (this.activeMoles.length >= 10) return;
 
     const index = Math.floor(Math.random() * NUM_HOLES);
 
     if (this.activeMoles.some((m) => m.index === index)) return;
 
-    const moleType = Math.random() < 0.15 ? ITEMS.STAR.TYPE : ITEMS.MOLE.TYPE;
-    this.activeMoles.push({ index, type: moleType, expiresAt: now + 3000 });
+    const itemType = this.getRandomItemType();
+    this.activeMoles.push({ index, type: itemType, expiresAt: now + 3000 });
 
     this.moleLocked.delete(index);
   }
 
   cleanupExpiredMoles(now) {
     this.activeMoles = this.activeMoles.filter((item) => now < item.expiresAt);
+  }
+
+  getRandomItemType() {
+    const r = Math.random();
+    let itemType = ITEMS.MOLE.TYPE;
+    if (r < 0.25) itemType = ITEMS.BOMB.TYPE; // 15%
+    if (r < 0.1) itemType = ITEMS.STAR.TYPE; // 10%
+    return itemType;
   }
 
   resetGame() {
