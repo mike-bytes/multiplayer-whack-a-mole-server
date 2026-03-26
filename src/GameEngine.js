@@ -69,6 +69,10 @@ export class GameEngine {
         points = ITEMS.BOMB.POINTS;
         break;
       }
+      case ITEMS.FRUIT.TYPE: {
+        points = ITEMS.FRUIT.POINTS;
+        break;
+      }
     }
     player.score += points;
     if (player.score >= WINNING_SCORE) {
@@ -127,7 +131,8 @@ export class GameEngine {
   getRandomItemType() {
     const r = Math.random();
     let itemType = ITEMS.MOLE.TYPE;
-    if (r < 0.25) itemType = ITEMS.BOMB.TYPE; // 15%
+    if (r < 0.35) itemType = ITEMS.BOMB.TYPE; // 15%
+    if (r < 0.2) itemType = ITEMS.FRUIT.TYPE; // 10%
     if (r < 0.1) itemType = ITEMS.STAR.TYPE; // 10%
     return itemType;
   }

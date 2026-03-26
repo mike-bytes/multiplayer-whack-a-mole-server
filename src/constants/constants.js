@@ -1,6 +1,6 @@
 export const NUM_HOLES = 16;
 export const TICK_RATE = 50;
-export const WINNING_SCORE = 25;
+export const WINNING_SCORE = 50;
 export const ITEMS = {
   MOLE: {
     TYPE: 'mole',
@@ -8,10 +8,14 @@ export const ITEMS = {
   },
   STAR: {
     TYPE: 'star',
-    POINTS: 3,
+    POINTS: 2,
   },
   BOMB: {
     TYPE: 'bomb',
     POINTS: -2,
+  },
+  FRUIT: {
+    TYPE: 'fruit',
+    POINTS: 3,
   },
 };
