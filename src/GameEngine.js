@@ -84,12 +84,12 @@ export class GameEngine {
   spawnMoles(now) {
     if (now < this.nextSpawnTime) return;
 
-    const count = Math.floor(Math.random() * 3) + 1;
+    const count = Math.floor(Math.random() * 4) + 1;
     for (let i = 0; i < count; i++) {
       this.spawnMole(now);
     }
 
-    const delay = 500;
+    const delay = 500 + Math.random() * 200;
     this.nextSpawnTime = now + delay;
   }
 
@@ -97,16 +97,19 @@ export class GameEngine {
     if (this.activeMoles.length >= 10) return;
 
     const index = Math.floor(Math.random() * NUM_HOLES);
-
     if (this.activeMoles.some((m) => m.index === index)) return;
 
     const itemType = this.getRandomItemType();
-    let lifetime = 2000;
-    if (itemType === MOLE_DATA.BOMB.TYPE) {
+    let lifetime = 1500;
+    if (itemType === MOLE_DATA.MOLE.TYPE) {
+      lifetime = Math.random() * 1000 + 1500;
+    } else if (
+      itemType === MOLE_DATA.BOMB.TYPE ||
+      itemType === MOLE_DATA.THUMBS_DOWN.TYPE
+    ) {
       lifetime = 3000;
     }
     this.activeMoles.push({ index, type: itemType, expiresAt: now + lifetime });
-
     this.moleLocked.delete(index);
   }
 
@@ -116,12 +119,24 @@ export class GameEngine {
 
   getRandomItemType() {
     const r = Math.random();
-    let itemType = MOLE_DATA.MOLE.TYPE;
-    if (r < 0.5) itemType = MOLE_DATA.BOMB.TYPE; // 20%
-    if (r < 0.3) itemType = MOLE_DATA.BLUEBERRY.TYPE; // 10%
-    if (r < 0.2) itemType = MOLE_DATA.GRAPE.TYPE; // 10%
-    if (r < 0.1) itemType = MOLE_DATA.STAR.TYPE; // 10%
-    return itemType;
+    switch (true) {
+      case r < 0.1:
+        return MOLE_DATA.STAR.TYPE;
+      case r < 0.2:
+        return MOLE_DATA.GRAPE.TYPE;
+      case r < 0.3:
+        return MOLE_DATA.BLUEBERRY.TYPE;
+      case r < 0.4:
+        return MOLE_DATA.LEMON.TYPE;
+      case r < 0.5:
+        return MOLE_DATA.BANANA.TYPE;
+      case r < 0.65:
+        return MOLE_DATA.THUMBS_DOWN.TYPE;
+      case r < 0.8:
+        return MOLE_DATA.BOMB.TYPE;
+      default:
+        return MOLE_DATA.MOLE.TYPE;
+    }
   }
 
   resetGame() {

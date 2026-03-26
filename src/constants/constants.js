@@ -22,4 +22,16 @@ export const MOLE_DATA = {
     TYPE: 'BLUEBERRY',
     POINTS: 3,
   },
+  THUMBS_DOWN: {
+    TYPE: 'THUMBS_DOWN',
+    POINTS: -3,
+  },
+  LEMON: {
+    TYPE: 'LEMON',
+    POINTS: 3,
+  },
+  BANANA: {
+    TYPE: 'BANANA',
+    POINTS: 3,
+  },
 };
