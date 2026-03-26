@@ -20,7 +20,8 @@ setInterval(() => {
   if (state.winner && !countdownRunning) {
     countdownRunning = true;
     // start countdown on clients
-    io.emit('startCountdown', 10);
+    const endTime = Date.now() + 10000;
+    io.emit('startCountdown', endTime);
 
     setTimeout(() => {
       game.resetGame();

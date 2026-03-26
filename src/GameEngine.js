@@ -98,7 +98,7 @@ export class GameEngine {
   spawnItems(now) {
     if (now < this.nextSpawnTime) return;
 
-    const count = Math.floor(Math.random() * 2) + 1;
+    const count = Math.floor(Math.random() * 3) + 1;
     for (let i = 0; i < count; i++) {
       this.spawnItem(now);
     }
