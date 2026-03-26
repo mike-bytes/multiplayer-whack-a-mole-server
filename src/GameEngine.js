@@ -4,7 +4,7 @@ export class GameEngine {
   constructor() {
     this.guestNum = 1;
 
-    this.activeMoles = [];
+    this.activeItems = [];
     this.moleLocked = new Set();
 
     this.players = {};
@@ -47,13 +47,13 @@ export class GameEngine {
     }
     this.lastWhackTime[playerId] = now;
 
-    const moleIndex = this.activeMoles.findIndex((m) => m.index === holeIndex);
+    const moleIndex = this.activeItems.findIndex((m) => m.index === holeIndex);
     if (moleIndex === -1) return 0;
 
     if (this.moleLocked.has(holeIndex)) return 0;
     this.moleLocked.add(holeIndex);
 
-    const item = this.activeMoles[moleIndex];
+    const item = this.activeItems[moleIndex];
     const player = this.players[playerId];
     let points = 0;
     switch (item.type) {
@@ -75,14 +75,14 @@ export class GameEngine {
       this.winner = { id: playerId, name: player.name };
     }
 
-    this.activeMoles.splice(moleIndex, 1);
+    this.activeItems.splice(moleIndex, 1);
     return points;
   }
 
   getState() {
     return {
       players: this.players,
-      activeMoles: this.activeMoles,
+      activeItems: this.activeItems,
       winner: this.winner,
     };
   }
@@ -108,20 +108,20 @@ export class GameEngine {
   }
 
   spawnItem(now) {
-    if (this.activeMoles.length >= 10) return;
+    if (this.activeItems.length >= 10) return;
 
     const index = Math.floor(Math.random() * NUM_HOLES);
 
-    if (this.activeMoles.some((m) => m.index === index)) return;
+    if (this.activeItems.some((m) => m.index === index)) return;
 
     const itemType = this.getRandomItemType();
-    this.activeMoles.push({ index, type: itemType, expiresAt: now + 3000 });
+    this.activeItems.push({ index, type: itemType, expiresAt: now + 3000 });
 
     this.moleLocked.delete(index);
   }
 
   cleanupExpiredMoles(now) {
-    this.activeMoles = this.activeMoles.filter((item) => now < item.expiresAt);
+    this.activeItems = this.activeItems.filter((item) => now < item.expiresAt);
   }
 
   getRandomItemType() {
@@ -133,7 +133,7 @@ export class GameEngine {
   }
 
   resetGame() {
-    this.activeMoles = [];
+    this.activeItems = [];
     this.moleLocked.clear();
 
     for (const id in this.players) {
