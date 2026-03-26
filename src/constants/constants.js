@@ -16,6 +16,6 @@ export const ITEMS = {
   },
   FRUIT: {
     TYPE: 'fruit',
-    POINTS: 3,
+    POINTS: 4,
   },
 };
