@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { GameEngine } from '../GameEngine.js';
+import { MOLE_DATA } from '../constants/constants.js';
 
 describe('GameEngine', () => {
   it('adds a player with default name and score', () => {
@@ -14,14 +15,14 @@ describe('GameEngine', () => {
   it('awards points when a mole is hit', () => {
     const engine = new GameEngine();
     engine.addPlayer('p1');
-    engine.activeItems = [
-      { index: 2, type: 'mole', expiresAt: Date.now() + 1000 },
+    engine.activeMoles = [
+      { index: 2, type: MOLE_DATA.MOLE.TYPE, expiresAt: Date.now() + 1000 },
     ];
     const points = engine.handleWhack('p1', 2);
 
     expect(points).toBeGreaterThan(0);
     expect(engine.players['p1'].score).toBe(points);
-    expect(engine.activeItems.length).toBe(0);
+    expect(engine.activeMoles.length).toBe(0);
   });
 
   it('adds a player with default name and score', () => {
@@ -33,21 +34,21 @@ describe('GameEngine', () => {
     expect(engine.players['p1'].name).toMatch(/Guest/);
   });
 
-  it('removes expired items', () => {
+  it('removes expired moles', () => {
     const engine = new GameEngine();
-    engine.activeItems = [
-      { index: 1, type: 'mole', expiresAt: Date.now() - 100 },
+    engine.activeMoles = [
+      { index: 1, type: MOLE_DATA.MOLE.TYPE, expiresAt: Date.now() - 100 },
     ];
     engine.cleanupExpiredMoles(Date.now());
 
-    expect(engine.activeItems.length).toBe(0);
+    expect(engine.activeMoles.length).toBe(0);
   });
 
   it('declares winner when score reaches winning score', () => {
     const engine = new GameEngine();
     engine.addPlayer('p1');
-    engine.activeItems = [
-      { index: 0, type: 'star', expiresAt: Date.now() + 1000 },
+    engine.activeMoles = [
+      { index: 0, type: MOLE_DATA.STAR.TYPE, expiresAt: Date.now() + 1000 },
     ];
     engine.players['p1'].score = 49;
     engine.handleWhack('p1', 0);
@@ -56,18 +57,18 @@ describe('GameEngine', () => {
     expect(engine.winner.id).toBe('p1');
   });
 
-  it('spawns items when spawn time reached', () => {
+  it('spawns moles when spawn time reached', () => {
     const engine = new GameEngine();
-    engine.spawnItems(Date.now());
+    engine.spawnMoles(Date.now());
 
-    expect(engine.activeItems.length).toBeGreaterThan(0);
+    expect(engine.activeMoles.length).toBeGreaterThan(0);
   });
 
   it('prevents spam clicking', () => {
     const engine = new GameEngine();
     engine.addPlayer('p1');
-    engine.activeItems = [
-      { index: 1, type: 'mole', expiresAt: Date.now() + 1000 },
+    engine.activeMoles = [
+      { index: 1, type: MOLE_DATA.MOLE.TYPE, expiresAt: Date.now() + 1000 },
     ];
     const first = engine.handleWhack('p1', 1);
     const second = engine.handleWhack('p1', 1);
@@ -80,8 +81,8 @@ describe('GameEngine', () => {
     const engine = new GameEngine();
     engine.addPlayer('p1');
     engine.addPlayer('p2');
-    engine.activeItems = [
-      { index: 3, type: 'mole', expiresAt: Date.now() + 1000 },
+    engine.activeMoles = [
+      { index: 3, type: MOLE_DATA.MOLE.TYPE, expiresAt: Date.now() + 1000 },
     ];
     const p1Points = engine.handleWhack('p1', 3);
     const p2Points = engine.handleWhack('p2', 3);
@@ -91,15 +92,15 @@ describe('GameEngine', () => {
     expect(p2Points).toBe(0);
   });
 
-  it('does not spawn two items in the same hole', () => {
+  it('does not spawn two moles in the same hole', () => {
     const engine = new GameEngine();
-    engine.activeItems = [
-      { index: 5, type: 'mole', expiresAt: Date.now() + 1000 },
+    engine.activeMoles = [
+      { index: 5, type: MOLE_DATA.MOLE.TYPE, expiresAt: Date.now() + 1000 },
     ];
     for (let i = 0; i < 20; i++) {
-      engine.spawnItem(Date.now());
+      engine.spawnMole(Date.now());
     }
-    const indexes = engine.activeItems.map((i) => i.index);
+    const indexes = engine.activeMoles.map((i) => i.index);
     const unique = new Set(indexes);
 
     expect(indexes.length).toBe(unique.size);
