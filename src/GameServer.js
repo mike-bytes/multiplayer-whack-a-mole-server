@@ -47,8 +47,9 @@ io.on('connection', (socket) => {
   socket.on('whack', (holeIndex) => {
     const points = game.handleWhack(socket.id, holeIndex);
     if (points !== 0) {
+      const isExplosion = points < 0;
       // only confirm successful whack to player
-      socket.emit('hitConfirmed', { index: holeIndex, points });
+      socket.emit('hitConfirmed', { index: holeIndex, points, isExplosion });
 
       // send everyone
       io.emit('gameState', game.getState());
