@@ -7,19 +7,18 @@ import { TICK_RATE } from './constants/constants.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
-
 const io = new Server(server, { cors: { origin: '*' } });
 
-let countdownRunning = false;
 const game = new GameEngine();
+
+let countdownRunning = false;
+const readyPlayers = new Set();
+
+// game loop
 setInterval(() => {
   game.update();
   const state = game.getState();
   io.emit('gameState', state);
-
-  if (state.winner) {
-    startCountdown();
-  }
 }, TICK_RATE);
 
 io.on('connection', (socket) => {
@@ -30,11 +29,26 @@ io.on('connection', (socket) => {
     console.log('Player connected: ', socket.id);
     game.addPlayer(socket.id, name);
 
-    console.log('game.getNumPlayers()', game.getNumPlayers());
+    // allow single player to just start on own
     if (game.getNumPlayers() === 2) {
       startCountdown();
-    } else if (game.getNumPlayers() > 2) {
-      startCountdown(1000);
+    } else {
+      readyPlayers.add(socket.id); // add the current player
+      io.emit('newPlayer');
+    }
+  });
+
+  socket.on('playerReady', () => {
+    console.log('playerReady', socket.id);
+    readyPlayers.add(socket.id);
+    console.log(
+      readyPlayers.size,
+      'ready players of total players',
+      game.getNumPlayers()
+    );
+    if (readyPlayers.size === game.getNumPlayers()) {
+      readyPlayers.clear();
+      startCountdown();
     }
   });
 
@@ -51,7 +65,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('Player disconected:', socket.id);
+    console.log('Player disconnected:', socket.id);
+    readyPlayers.delete(socket.id);
     game.removePlayer(socket.id);
     io.emit('gameState', game.getState());
   });
@@ -65,6 +80,7 @@ const startCountdown = (duration = 5000) => {
   if (countdownRunning) return;
   countdownRunning = true;
 
+  console.log('starting countdown with duration', duration);
   const endTime = Date.now() + duration;
   io.emit('startCountdown', endTime);
 
@@ -72,5 +88,5 @@ const startCountdown = (duration = 5000) => {
     game.resetGame();
     countdownRunning = false;
     io.emit('gameState', game.getState());
-  }, 10000);
+  }, duration);
 };
