@@ -14,13 +14,13 @@ export class GameEngine {
     this.winner = null;
   }
 
-  addPlayer(id) {
+  addPlayer(id, name) {
     this.guestNum = (this.guestNum + 1) % 10;
     const defaultName = `Guest${this.guestNum}`;
 
     this.players[id] = {
       score: 0,
-      name: defaultName,
+      name: name || defaultName,
     };
   }
 
@@ -150,5 +150,9 @@ export class GameEngine {
     this.startTime = Date.now();
     this.nextSpawnTime = Date.now();
     this.winner = null;
+  }
+
+  getNumPlayers() {
+    return Object.values(this.players).length;
   }
 }

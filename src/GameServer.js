@@ -17,31 +17,25 @@ setInterval(() => {
   const state = game.getState();
   io.emit('gameState', state);
 
-  if (state.winner && !countdownRunning) {
-    countdownRunning = true;
-    // start countdown on clients
-    const endTime = Date.now() + 10000;
-    io.emit('startCountdown', endTime);
-
-    setTimeout(() => {
-      game.resetGame();
-      countdownRunning = false;
-      io.emit('gameState', state);
-    }, 10000);
+  if (state.winner) {
+    startCountdown();
   }
 }, TICK_RATE);
 
 io.on('connection', (socket) => {
-  console.log('Player connected: ', socket.id);
+  // send update to person who connected
+  socket.emit('gameState', game.getState());
 
-  game.addPlayer(socket.id);
-  game.resetGame();
-  // send update to everyone
-  io.emit('gameState', game.getState());
+  socket.on('addPlayer', (name) => {
+    console.log('Player connected: ', socket.id);
+    game.addPlayer(socket.id, name);
 
-  socket.on('setPlayerName', (name) => {
-    game.setPlayerName(socket.id, name);
-    io.emit('gameState', game.getState());
+    console.log('game.getNumPlayers()', game.getNumPlayers());
+    if (game.getNumPlayers() === 2) {
+      startCountdown();
+    } else if (game.getNumPlayers() > 2) {
+      startCountdown(1000);
+    }
   });
 
   socket.on('whack', (holeIndex) => {
@@ -66,3 +60,17 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+const startCountdown = (duration = 5000) => {
+  if (countdownRunning) return;
+  countdownRunning = true;
+
+  const endTime = Date.now() + duration;
+  io.emit('startCountdown', endTime);
+
+  setTimeout(() => {
+    game.resetGame();
+    countdownRunning = false;
+    io.emit('gameState', game.getState());
+  }, 10000);
+};
