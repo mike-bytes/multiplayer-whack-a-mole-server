@@ -2,8 +2,6 @@ import { NUM_HOLES, WINNING_SCORE, MOLE_DATA } from './constants/constants.js';
 
 export class GameEngine {
   constructor() {
-    this.guestNum = 1;
-
     this.activeMoles = [];
     this.moleLocked = new Set();
 
@@ -15,12 +13,9 @@ export class GameEngine {
   }
 
   addPlayer(id, name) {
-    this.guestNum = (this.guestNum + 1) % 10;
-    const defaultName = `Guest${this.guestNum}`;
-
     this.players[id] = {
       score: 0,
-      name: name || defaultName,
+      name: name || 'guest',
     };
   }
 
@@ -84,7 +79,7 @@ export class GameEngine {
   spawnMoles(now) {
     if (now < this.nextSpawnTime) return;
 
-    const count = Math.floor(Math.random() * 4) + 1;
+    const count = Math.floor(Math.random() * 2 * this.getNumPlayers()) + 1;
     for (let i = 0; i < count; i++) {
       this.spawnMole(now);
     }
@@ -94,7 +89,7 @@ export class GameEngine {
   }
 
   spawnMole(now) {
-    if (this.activeMoles.length >= 10) return;
+    if (this.activeMoles.length >= 12) return;
 
     const index = Math.floor(Math.random() * NUM_HOLES);
     if (this.activeMoles.some((m) => m.index === index)) return;
