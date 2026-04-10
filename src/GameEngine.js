@@ -50,14 +50,20 @@ export class GameEngine {
 
     const item = this.activeMoles[moleIndex];
     const player = this.players[playerId];
-    const points = MOLE_DATA[item.type]?.POINTS;
-    player.score += points;
-    if (player.score >= WINNING_SCORE) {
-      this.winner = { id: playerId, name: player.name };
+    if (player) {
+      const points = MOLE_DATA[item.type]?.POINTS;
+      if ('score' in player) {
+        player.score += points;
+        if (player.score >= WINNING_SCORE) {
+          this.winner = { id: playerId, name: player.name };
+        }
+      }
+      this.activeMoles.splice(moleIndex, 1);
+      return points;
     }
 
-    this.activeMoles.splice(moleIndex, 1);
-    return points;
+    this.moleLocked.delete(holeIndex);
+    return 0;
   }
 
   getState() {
